@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32901.82
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "zdmofficepi", "zdmofficepi\zdmofficepi.csproj", "{1E4FF2D3-17D1-4E81-B1C9-5B6D21637865}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1E4FF2D3-17D1-4E81-B1C9-5B6D21637865}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E4FF2D3-17D1-4E81-B1C9-5B6D21637865}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E4FF2D3-17D1-4E81-B1C9-5B6D21637865}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E4FF2D3-17D1-4E81-B1C9-5B6D21637865}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1ED901FA-8930-4FCE-B7FE-E65F756F0971}
+	EndGlobalSection
+EndGlobal
