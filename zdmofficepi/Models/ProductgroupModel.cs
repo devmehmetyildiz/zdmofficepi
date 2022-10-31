@@ -17,5 +17,11 @@ namespace zdmofficepi.Models
         public List<ProductModel> Products { get; set; }
         public bool IsSet { get; set; }
         public double Price { get; set; }
+        public string Categoryuuid { get; set; }
+        public string Subcategoryuuid { get; set; }
+        [NotMapped]
+        public CategoryModel Category { get; set; }
+        [NotMapped]
+        public SubcategoryModel Subcategory { get; set; }
     }
 }
