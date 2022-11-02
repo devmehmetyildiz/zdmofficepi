@@ -18,5 +18,6 @@ namespace zdmofficepi.DataAccess
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<SubcategoryModel> Subcategories { get; set; }
         public DbSet<UserModel> Users { get; set; }
+        public DbSet<CompanyModel> Companies { get; set; }
     }
 }

@@ -14,6 +14,7 @@ namespace zdmofficepi.DataAccess
         IProductRepositroy ProductRepositroy { get; }
         ISubcategoriesRepositroy SubcategoriesRepositroy { get; }
         IUserRepositroy UserRepositroy { get; }
+        ICompanyRepository CompanyRepository { get; }
         int Complate();
     }
 }

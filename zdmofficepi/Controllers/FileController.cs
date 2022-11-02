@@ -30,6 +30,7 @@ namespace zdmofficepi.Controllers
             _logger = logger;
             _context = context;
             UnitofWork = new UnitofWork(context);
+            fileUtils = new FileUtils(context);
         }
 
         [HttpGet]

@@ -23,5 +23,8 @@ namespace zdmofficepi.Models
         public CategoryModel Category { get; set; }
         [NotMapped]
         public SubcategoryModel Subcategory { get; set; }
+        public string Companyuuid { get; set; }
+        [NotMapped]
+        public CompanyModel Company { get; set; }
     }
 }

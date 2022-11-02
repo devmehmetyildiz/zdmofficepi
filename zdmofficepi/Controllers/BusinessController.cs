@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -24,7 +25,7 @@ namespace zdmofficepi.Controllers
         private readonly ApplicationDBContext _context;
         UnitofWork UnitofWork;
         PasswordUtils PasswordUtils;
-
+        FileUtils fileUtils;
         public BusinessController(IConfiguration configuration, ILogger<AuthController> logger, ApplicationDBContext context)
         {
             _configuration = configuration;
@@ -32,6 +33,7 @@ namespace zdmofficepi.Controllers
             _context = context;
             UnitofWork = new UnitofWork(context);
             PasswordUtils = new PasswordUtils();
+            fileUtils = new FileUtils(context);
         }
 
         [HttpGet]
@@ -120,8 +122,11 @@ namespace zdmofficepi.Controllers
             var data = UnitofWork.ProductgroupRepository.GetRecords<ProductgroupModel>(u => u.IsActive).ToList();
             foreach (var item in data)
             {
+                item.Products = UnitofWork.ProductRepositroy.GetRecords<ProductModel>(u => u.Groupuui == item.Uuid && u.IsActive);
                 item.Category = UnitofWork.CategoriesRepository.GetSingleRecord<CategoryModel>(u => u.Uuid == item.Categoryuuid);
                 item.Subcategory = UnitofWork.SubcategoriesRepositroy.GetSingleRecord<SubcategoryModel>(u => u.Uuid == item.Subcategoryuuid);
+                item.Company = UnitofWork.CompanyRepository.GetSingleRecord<CompanyModel>(u => u.Uuid == item.Companyuuid);
+
             }
             return Ok(data);
         }
@@ -132,7 +137,9 @@ namespace zdmofficepi.Controllers
         {
             ProductgroupModel Data = UnitofWork.ProductgroupRepository.GetSingleRecord<ProductgroupModel>(u => u.Uuid == guid);
             Data.Category = UnitofWork.CategoriesRepository.GetSingleRecord<CategoryModel>(u => u.Uuid == Data.Categoryuuid);
+            Data.Products = UnitofWork.ProductRepositroy.GetRecords<ProductModel>(u => u.Groupuui == Data.Uuid && u.IsActive);
             Data.Subcategory = UnitofWork.SubcategoriesRepositroy.GetSingleRecord<SubcategoryModel>(u => u.Uuid == Data.Subcategoryuuid);
+            Data.Company = UnitofWork.CompanyRepository.GetSingleRecord<CompanyModel>(u => u.Uuid == Data.Companyuuid);
             if (Data == null)
             {
                 return NotFound();
@@ -140,32 +147,116 @@ namespace zdmofficepi.Controllers
             return Ok(Data);
         }
 
+        [HttpGet]
+        [Route("Productgroups/GetFiles")]
+        public IActionResult ProductgroupsGetFiles(string guid)
+        {
+            List<FileModel> files = new List<FileModel>();
+            var products = UnitofWork.ProductRepositroy.GetRecords<ProductModel>(u => u.Groupuui == guid);
+            foreach (var item in products)
+            {
+                files.AddRange(UnitofWork.FileRepository.GetRecords<FileModel>(u => u.Productuui == item.Uuid));
+                
+            }
+            return Ok(files);
+        }
+
+
+        [AllowAnonymous]
+        [HttpGet]
+        [Route("Products/GetImage")]
+        public IActionResult ProducsGetImage(string guid)
+        {
+            FileModel Data = UnitofWork.FileRepository.GetSingleRecord<FileModel>(u=>u.Productuui==guid);
+            if (Data != null)
+                return File(fileUtils.GetFile(Data), Data.Filetype);
+            else
+                return NotFound();
+        }
+
         [Route("Productgroups/Add")]
         [HttpPost]
         public IActionResult ProductgroupAdd(ProductgroupModel model)
         {
+            List<ProductresponseModel> response = new List<ProductresponseModel>();
+            string groupuuid = Guid.NewGuid().ToString();
             var claimsIdentity = this.User.Identity as ClaimsIdentity;
             var username = claimsIdentity.FindFirst(ClaimTypes.Name)?.Value;
             model.Createduser = username;
             model.IsActive = true;
             model.Createdtime = DateTime.Now;
-            model.Uuid = Guid.NewGuid().ToString();
+            model.Uuid = groupuuid;
             UnitofWork.ProductgroupRepository.Add(model);
+            foreach (var item in model.Products)
+            {
+                item.Id = 0;
+                string productuuid = Guid.NewGuid().ToString();
+                item.Groupuui = groupuuid;
+                item.Createduser = username;
+                item.IsActive = true;
+                item.Createdtime = DateTime.Now;
+                item.Uuid = productuuid;
+                UnitofWork.ProductRepositroy.Add(item);
+                response.Add(new ProductresponseModel { Productname = item.Name, Productuuid = productuuid });
+            }
             UnitofWork.Complate();
-            return Ok();
+            return Ok(response);
         }
 
         [Route("Productgroups/Update")]
         [HttpPut]
         public IActionResult Productgroupupdate(ProductgroupModel model)
         {
+            List<ProductresponseModel> response = new List<ProductresponseModel>();
             var claimsIdentity = this.User.Identity as ClaimsIdentity;
             var username = claimsIdentity.FindFirst(ClaimTypes.Name)?.Value;
             model.Updateduser = username;
             model.Updatetime = DateTime.Now;
             UnitofWork.ProductgroupRepository.update(UnitofWork.ProductgroupRepository.GetSingleRecord<ProductgroupModel>(u => u.Uuid == model.Uuid), model);
+            foreach (var item in model.Products)
+            {
+                if (string.IsNullOrEmpty(item.Uuid))
+                {
+                    item.Id = 0;
+                    string productuuid = Guid.NewGuid().ToString();
+                    item.Createduser = username;
+                    item.IsActive = true;
+                    item.Createdtime = DateTime.Now;
+                    item.Uuid = productuuid;
+                    item.Groupuui = model.Uuid;
+                    UnitofWork.ProductRepositroy.Add(item);
+                    response.Add(new ProductresponseModel { Productname = item.Name, Productuuid = productuuid });
+                }
+                else
+                {
+                    if (item.IsDataChanged)
+                    {
+                        item.Updateduser = username;
+                        item.Updatetime = DateTime.Now;
+                        if (!item.IsActive)
+                        {
+                            FileModel filemodel = UnitofWork.FileRepository.GetSingleRecord<FileModel>(u => u.Productuui == item.Uuid);
+                            if(filemodel != null)
+                            {
+                                filemodel.Deleteuser = username;
+                                filemodel.IsActive = false;
+                                filemodel.Deletetime = DateTime.Now;
+                                if (fileUtils.DeleteFile(filemodel))
+                                {
+                                    UnitofWork.FileRepository.update(UnitofWork.FileRepository.GetSingleRecord<FileModel>(u => u.Uuid == filemodel.Uuid), filemodel);
+                                }
+                            }
+                        }
+                        UnitofWork.ProductRepositroy.update(UnitofWork.ProductRepositroy.GetSingleRecord<ProductModel>(u => u.Uuid == item.Uuid), item);
+                    }
+                    if (item.IsFileChanged && item.IsActive)
+                    {
+                        response.Add(new ProductresponseModel { Productname = item.Name, Productuuid = item.Uuid,IsFileUpdate=true });
+                    }
+                }
+            }
             UnitofWork.Complate();
-            return Ok();
+            return Ok(response);
         }
 
         [Route("Productgroups/Delete")]
@@ -190,6 +281,67 @@ namespace zdmofficepi.Controllers
             return Ok();
         }
 
+        #endregion
+
+        #region Company
+        [HttpGet]
+        [Route("Company/GetAll")]
+        public IActionResult CompanyGetAll()
+        {
+            return Ok(UnitofWork.CompanyRepository.GetRecords<CompanyModel>(u => u.IsActive).ToList());
+        }
+        [HttpGet]
+        [Route("Company/GetSelected")]
+        public IActionResult CompanyGetselected(string guid)
+        {
+            CompanyModel Data = UnitofWork.CompanyRepository.GetSingleRecord<CompanyModel>(u => u.Uuid == guid);
+            if (Data == null)
+            {
+                return NotFound();
+            }
+            return Ok(Data);
+        }
+        [Route("Company/Add")]
+        [HttpPost]
+        public IActionResult CompanyAdd(CompanyModel model)
+        {
+            var claimsIdentity = this.User.Identity as ClaimsIdentity;
+            var username = claimsIdentity.FindFirst(ClaimTypes.Name)?.Value;
+            model.Createduser = username;
+            model.IsActive = true;
+            model.Createdtime = DateTime.Now;
+            model.Uuid = Guid.NewGuid().ToString();
+            UnitofWork.CompanyRepository.Add(model);
+            UnitofWork.Complate();
+            return Ok();
+        }
+
+        [Route("Company/Update")]
+        [HttpPut]
+        public IActionResult Companyupdate(CompanyModel model)
+        {
+            var claimsIdentity = this.User.Identity as ClaimsIdentity;
+            var username = claimsIdentity.FindFirst(ClaimTypes.Name)?.Value;
+            model.Updateduser = username;
+            model.Updatetime = DateTime.Now;
+            UnitofWork.CompanyRepository.update(UnitofWork.CompanyRepository.GetSingleRecord<CompanyModel>(u => u.Uuid == model.Uuid), model);
+            UnitofWork.Complate();
+            return Ok();
+        }
+
+        [Route("Company/Delete")]
+        [HttpDelete]
+        public IActionResult Companydelete(CompanyModel model)
+        {
+            var claimsIdentity = this.User.Identity as ClaimsIdentity;
+            var username = claimsIdentity.FindFirst(ClaimTypes.Name)?.Value;
+            model.Deleteuser = username;
+            model.Deletetime = DateTime.Now;
+            model.IsActive = false;
+            UnitofWork.CompanyRepository.update(UnitofWork.CompanyRepository.GetSingleRecord<CompanyModel>(u => u.Uuid == model.Uuid), model);
+            UnitofWork.Complate();
+            return Ok();
+        }
         #endregion
 
         #region Categories
@@ -331,5 +483,8 @@ namespace zdmofficepi.Controllers
             return Ok();
         }
         #endregion
+
+
+      
     }
 }

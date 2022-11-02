@@ -19,6 +19,7 @@ namespace zdmofficepi.DataAccess
             ProductRepositroy = new ProductRepository(_applicationDBContext);
             SubcategoriesRepositroy = new SubcategoriesRepository(_applicationDBContext);
             UserRepositroy = new UserRepository(_applicationDBContext);
+            CompanyRepository = new CompanyRepositroy(_applicationDBContext);
         }
 
         public ICategoriesRepository CategoriesRepository { get; private set; }
@@ -32,6 +33,8 @@ namespace zdmofficepi.DataAccess
         public ISubcategoriesRepositroy SubcategoriesRepositroy { get; private set; }
 
         public IUserRepositroy UserRepositroy { get; private set; }
+
+        public ICompanyRepository CompanyRepository { get; private set; }
 
         public int Complate()
         {

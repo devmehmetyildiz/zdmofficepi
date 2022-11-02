@@ -14,6 +14,11 @@ namespace zdmofficepi.Models
         public string Dimension { get; set; }
         public double Price { get; set; }
         [NotMapped]
+        public bool IsFileChanged { get; set; }
+        [NotMapped]
+        public bool IsDataChanged { get; set; }
+        [NotMapped]
         public ProductgroupModel Productgroup { get; set; }
+     
     }
 }

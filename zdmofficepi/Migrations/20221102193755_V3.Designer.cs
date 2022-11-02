@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using zdmofficepi.DataAccess;
 
 namespace zdmofficepi.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20221102193755_V3")]
+    partial class V3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -203,9 +205,6 @@ namespace zdmofficepi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Categoryuuid")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Companyuuid")
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("Createdtime")

@@ -92,7 +92,7 @@ namespace zdmofficepi.Utils
                 using (FtpWebResponse response = (FtpWebResponse)request.GetResponse())
                 {
                     response.Close();
-                    string FOLDERURL = $"{FTP_URL}/{FTP_FOLDERNAME}/{model.Filefolder}/";
+                    string FOLDERURL = $"{FTP_URL}/{FTP_FOLDERNAME}/{model.Filefolder}";
                     FtpWebRequest folderrequest = (FtpWebRequest)WebRequest.Create(URL);
                     folderrequest.Method = WebRequestMethods.Ftp.RemoveDirectory;
                     folderrequest.Credentials = new NetworkCredential(FTP_USERNAME, FTP_PASSWORD);
